@@ -3,8 +3,8 @@
     public class CustomProperty
     {
         public readonly CustomPropertyDefinition CustomPropertyDefinition;
-        public CustomPropertyValue<int> IntegerCustomProperty { get; set; }
-        public CustomPropertyValue<int> HexCustomProperty { get; set; }
+        public CustomPropertyValue<long> IntegerCustomProperty { get; set; }
+        public CustomPropertyValue<long> HexCustomProperty { get; set; }
         public CustomPropertyValue<double> FloatCustomProperty { get; set; }
         public CustomPropertyValue<string> StringCustomProperty { get; set; }
         public CustomPropertyValue<string> EnumCustomProperty { get; set; }
@@ -22,7 +22,7 @@
                     if(!CustomPropertyDefinition.TryGetIntegerValue(value, isNumeric, out var integerValue))
                         return false;
 
-                    IntegerCustomProperty = new CustomPropertyValue<int>()
+                    IntegerCustomProperty = new CustomPropertyValue<long>()
                     {
                         Value = integerValue
                     };
@@ -32,7 +32,7 @@
                     if(!CustomPropertyDefinition.TryGetHexValue(value, isNumeric, out var hexValue))
                         return false;
 
-                    HexCustomProperty = new CustomPropertyValue<int>()
+                    HexCustomProperty = new CustomPropertyValue<long>()
                     {
                         Value = hexValue
                     };
@@ -74,13 +74,13 @@
             switch (CustomPropertyDefinition.DataType)
             {
                 case CustomPropertyDataType.Integer:
-                    IntegerCustomProperty = new CustomPropertyValue<int>()
+                    IntegerCustomProperty = new CustomPropertyValue<long>()
                     {
                         Value = CustomPropertyDefinition.IntegerCustomProperty.Default
                     };
                     break;
                 case CustomPropertyDataType.Hex:
-                    HexCustomProperty = new CustomPropertyValue<int>()
+                    HexCustomProperty = new CustomPropertyValue<long>()
                     {
                         Value = CustomPropertyDefinition.HexCustomProperty.Default
                     };

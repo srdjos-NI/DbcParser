@@ -91,19 +91,19 @@ namespace DbcParserLib.Parsers
                             return true;
                         }
 
-                        customProperty.IntegerCustomProperty = new NumericCustomPropertyDefinition<int>
+                        customProperty.IntegerCustomProperty = new NumericCustomPropertyDefinition<long>
                         {
-                            Minimum = Convert.ToInt32(minValue),
-                            Maximum = Convert.ToInt32(maxValue)
+                            Minimum = Convert.ToInt64(minValue),
+                            Maximum = Convert.ToInt64(maxValue)
                         };
                     }
                     else if (match.Groups[IsIntegerValueGroup].Value.Equals("HEX"))
                     {
                         dataType = CustomPropertyDataType.Hex;
-                        customProperty.HexCustomProperty = new NumericCustomPropertyDefinition<int>
+                        customProperty.HexCustomProperty = new NumericCustomPropertyDefinition<long>
                         {
-                            Minimum = int.Parse(match.Groups[MinIntGroup].Value, CultureInfo.InvariantCulture),
-                            Maximum = int.Parse(match.Groups[MaxIntGroup].Value, CultureInfo.InvariantCulture),
+                            Minimum = long.Parse(match.Groups[MinIntGroup].Value, CultureInfo.InvariantCulture),
+                            Maximum = long.Parse(match.Groups[MaxIntGroup].Value, CultureInfo.InvariantCulture),
                         };
                     }
                     else if (match.Groups[IsFloatValueGroup].Value.Equals("FLOAT"))

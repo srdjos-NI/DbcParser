@@ -467,5 +467,71 @@ namespace DbcParserLib.Tests
             var valbyte = Packer.RxSignalUnpack(byteMsg, sig);
             Assert.That(valbyte, Is.EqualTo(4095));
         }
+
+        [Test]
+        public void SignedInt64PackingLength64NegativeRoundtrip()
+        {
+            var sig = new Signal
+            {
+                Length = 64,
+                StartBit = 0,
+                ValueType = DbcValueType.Signed,
+                ByteOrder = 1,
+                Factor = 1,
+                Offset = 0
+            };
+
+            var txMsg = Packer.TxSignalPackInt64(-1, sig);
+            Assert.That(txMsg, Is.EqualTo(ulong.MaxValue));
+
+            var unpacked = Packer.RxSignalUnpackInt64(txMsg, sig);
+            Assert.That(unpacked, Is.EqualTo(-1));
+
+            var byteMsg = new byte[8];
+            Packer.TxSignalPackInt64(byteMsg, -1, sig);
+            Assert.That(BitConverter.ToUInt64(byteMsg), Is.EqualTo(ulong.MaxValue));
+            Assert.That(Packer.RxSignalUnpackInt64(byteMsg, sig), Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void UnsignedUInt64PackingRoundtrip()
+        {
+            var sig = new Signal
+            {
+                Length = 64,
+                StartBit = 0,
+                ValueType = DbcValueType.Unsigned,
+                ByteOrder = 1,
+                Factor = 1,
+                Offset = 0
+            };
+
+            const ulong expected = 0xFEDCBA9876543210UL;
+            var txMsg = Packer.TxSignalPackUInt64(expected, sig);
+            Assert.That(txMsg, Is.EqualTo(expected));
+            Assert.That(Packer.RxSignalUnpackUInt64(txMsg, sig), Is.EqualTo(expected));
+
+            var byteMsg = new byte[8];
+            Packer.TxSignalPackUInt64(byteMsg, expected, sig);
+            Assert.That(BitConverter.ToUInt64(byteMsg), Is.EqualTo(expected));
+            Assert.That(Packer.RxSignalUnpackUInt64(byteMsg, sig), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void SignedInt64ApiThrowsForUnsignedSignal()
+        {
+            var sig = new Signal
+            {
+                Length = 16,
+                StartBit = 0,
+                ValueType = DbcValueType.Unsigned,
+                ByteOrder = 1,
+                Factor = 1,
+                Offset = 0
+            };
+
+            Assert.Throws<InvalidOperationException>(() => Packer.TxSignalPackInt64(1, sig));
+            Assert.Throws<InvalidOperationException>(() => Packer.RxSignalUnpackInt64(1, sig));
+        }
     }
 }

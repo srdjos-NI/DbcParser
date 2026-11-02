@@ -82,7 +82,7 @@ namespace DbcParserLib
             {
                 if (property.IntegerCustomProperty != null)
                 {
-                    cycleTime = property.IntegerCustomProperty.Value;
+                    cycleTime = (int)property.IntegerCustomProperty.Value;
                     return true;
                 }
                 else if (property.FloatCustomProperty != null)

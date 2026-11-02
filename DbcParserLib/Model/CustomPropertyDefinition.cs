@@ -9,8 +9,8 @@ namespace DbcParserLib.Model
         private readonly IParseFailureObserver m_observer;
         public string Name { get; set; }
         public CustomPropertyDataType DataType { get; set; }
-        public NumericCustomPropertyDefinition<int> IntegerCustomProperty { get; set; }
-        public NumericCustomPropertyDefinition<int> HexCustomProperty { get; set; }
+        public NumericCustomPropertyDefinition<long> IntegerCustomProperty { get; set; }
+        public NumericCustomPropertyDefinition<long> HexCustomProperty { get; set; }
         public NumericCustomPropertyDefinition<double> FloatCustomProperty { get; set; }
         public StringCustomPropertyDefinition StringCustomProperty { get; set; }
         public EnumCustomPropertyDefinition EnumCustomProperty { get; set; }
@@ -56,7 +56,7 @@ namespace DbcParserLib.Model
             }
         }
 
-        internal bool TryGetIntegerValue(string value, bool isNumeric, out int integerValue)
+        internal bool TryGetIntegerValue(string value, bool isNumeric, out long integerValue)
         {
             integerValue = 0;
             if (!isNumeric)
@@ -65,7 +65,7 @@ namespace DbcParserLib.Model
                 return false;
             }
 
-            if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture,
+            if (!long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture,
                     out integerValue))
             {
                 m_observer.PropertySyntaxError();
@@ -84,7 +84,7 @@ namespace DbcParserLib.Model
             return true;
         }
 
-        internal bool TryGetHexValue(string value, bool isNumeric, out int hexValue)
+        internal bool TryGetHexValue(string value, bool isNumeric, out long hexValue)
         {
             hexValue = 0;
             if (!isNumeric)
@@ -93,7 +93,7 @@ namespace DbcParserLib.Model
                 return false;
             }
 
-            if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture,
+            if (!long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture,
                     out hexValue))
             {
                 m_observer.PropertySyntaxError();

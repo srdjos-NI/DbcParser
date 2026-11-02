@@ -28,6 +28,20 @@ namespace DbcParserLib
                 return MirrorMsg(((uint64_T)iVal & bitMask) << GetStartBitLE(signal));
         }
 
+        public static uint64_T TxSignalPackInt64(int64_T value, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Signed);
+
+            var rawValue = EncodeSignedInteger(value, signal.Length);
+            return TxStatePack(rawValue, signal);
+        }
+
+        public static uint64_T TxSignalPackUInt64(uint64_T value, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Unsigned);
+            return TxStatePack(value, signal);
+        }
+
         /// <summary>
         /// Function to pack a signal into a CAN data message
         /// </summary>
@@ -47,6 +61,18 @@ namespace DbcParserLib
                 return;
             }
             WriteBits(message, unchecked((uint64_T)iVal), signal.StartBit, signal.Length);
+        }
+
+        public static void TxSignalPackInt64(uint8_T[] message, int64_T value, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Signed);
+            WriteSignalBits(message, EncodeSignedInteger(value, signal.Length), signal);
+        }
+
+        public static void TxSignalPackUInt64(uint8_T[] message, uint64_T value, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Unsigned);
+            WriteSignalBits(message, CLAMP(value, 0UL, signal.BitMask()), signal);
         }
 
         /// <summary>
@@ -89,6 +115,18 @@ namespace DbcParserLib
             return RxUnpackApplySignAndScale(signal, iVal);
         }
 
+        public static int64_T RxSignalUnpackInt64(uint64_T RxMsg64, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Signed);
+            return DecodeSignedInteger(RxStateUnpack(RxMsg64, signal), signal.Length);
+        }
+
+        public static uint64_T RxSignalUnpackUInt64(uint64_T RxMsg64, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Unsigned);
+            return RxStateUnpack(RxMsg64, signal);
+        }
+
         /// <summary>
         /// Function to unpack a signal from a CAN data message
         /// </summary>
@@ -115,6 +153,18 @@ namespace DbcParserLib
             return RxUnpackApplySignAndScale(signal, iVal);
         }
 
+        public static int64_T RxSignalUnpackInt64(uint8_T[] receiveMessage, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Signed);
+            return DecodeSignedInteger(ExtractRawValue(receiveMessage, signal), signal.Length);
+        }
+
+        public static uint64_T RxSignalUnpackUInt64(uint8_T[] receiveMessage, Signal signal)
+        {
+            EnsureSignalType(signal, DbcValueType.Unsigned);
+            return ExtractRawValue(receiveMessage, signal);
+        }
+
         /// <summary>
         /// Function to unpack a state (unsigned integer) from a CAN data message
         /// </summary>
@@ -133,6 +183,79 @@ namespace DbcParserLib
                 iVal = (MirrorMsg(RxMsg64) >> GetStartBitLE(signal)) & bitMask;
 
             return iVal;
+        }
+
+        private static uint64_T ExtractRawValue(uint8_T[] receiveMessage, Signal signal)
+        {
+            var startBit = signal.StartBit;
+            var message = receiveMessage;
+
+            if (!signal.Intel())
+            {
+                var tempArray = new uint8_T[message.Length];
+                Array.Copy(message, tempArray, message.Length);
+                Array.Reverse(tempArray);
+
+                message = tempArray;
+                startBit = GetStartBitLE(signal, message.Length);
+            }
+
+            return ExtractBits(message, startBit, signal.Length);
+        }
+
+        private static uint64_T EncodeSignedInteger(int64_T value, int length)
+        {
+            if (length <= 0 || length > 64)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            if (length == 64)
+                return unchecked((uint64_T)value);
+
+            var max = (1L << (length - 1)) - 1;
+            var min = -(1L << (length - 1));
+            var clamped = CLAMP(value, min, max);
+
+            if (clamped < 0)
+                return unchecked((uint64_T)(clamped + (1L << length)));
+
+            return unchecked((uint64_T)clamped);
+        }
+
+        private static int64_T DecodeSignedInteger(uint64_T value, int length)
+        {
+            if (length <= 0 || length > 64)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            if (length == 64)
+                return unchecked((int64_T)value);
+
+            var signedValue = Convert.ToInt64(value);
+            if ((value >> (length - 1)) != 0)
+                signedValue -= (1L << length);
+
+            return signedValue;
+        }
+
+        private static void EnsureSignalType(Signal signal, DbcValueType expected)
+        {
+            if (signal == null)
+                throw new ArgumentNullException(nameof(signal));
+
+            if (signal.ValueType != expected)
+                throw new InvalidOperationException($"Signal '{signal.Name}' has value type '{signal.ValueType}' but '{expected}' is required.");
+        }
+
+        private static void WriteSignalBits(uint8_T[] message, uint64_T rawValue, Signal signal)
+        {
+            if (!signal.Intel())
+            {
+                Array.Reverse(message);
+                WriteBits(message, rawValue, GetStartBitLE(signal, message.Length), signal.Length);
+                Array.Reverse(message);
+                return;
+            }
+
+            WriteBits(message, rawValue, signal.StartBit, signal.Length);
         }
 
         private static int64_T TxPackApplySignAndScale(double value, Signal signal)
@@ -156,7 +279,7 @@ namespace DbcParserLib
                 iVal = CLAMP(iVal, 0L, (int64_T)bitMask);
 
             // Manage sign bit (if signed)
-            if (signal.ValueType == DbcValueType.Signed && iVal < 0)
+            if (signal.ValueType == DbcValueType.Signed && iVal < 0 && signal.Length < 64)
             {
                 iVal += (int64_T)(1UL << signal.Length);
             }

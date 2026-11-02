@@ -370,6 +370,34 @@ BA_ ""EnumAttributeName"" SG_ 1043 COUNTER_ALT ""ThirdVal""; ";
         }
 
         [Test]
+        public void UserDefinedAttributes64BitIntegerValuesTest()
+        {
+            var dbcString = @"
+BU_: XXX
+
+BO_ 1043 BLINKERS: 8 XXX
+ SG_ COUNTER_ALT : 15|4@0+ (1,0) [0|15] """" XXX
+
+BA_DEF_ BO_ ""BigIntAttribute"" INT 0 5000000000;
+BA_DEF_ BO_ ""BigHexAttribute"" HEX 0 4294967296;
+
+BA_DEF_DEF_ ""BigIntAttribute"" 4000000000;
+BA_DEF_DEF_ ""BigHexAttribute"" 4294967296;
+
+BA_ ""BigIntAttribute"" BO_ 1043 5000000000;
+BA_ ""BigHexAttribute"" BO_ 1043 4294967296; ";
+
+            var dbc = Parser.Parse(dbcString);
+            var message = dbc.Messages.First();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(message.CustomProperties["BigIntAttribute"].IntegerCustomProperty.Value, Is.EqualTo(5000000000L));
+                Assert.That(message.CustomProperties["BigHexAttribute"].HexCustomProperty.Value, Is.EqualTo(4294967296L));
+            });
+        }
+
+        [Test]
         public void EnvironmentVariableTest()
         {
             var dbcString = @"
